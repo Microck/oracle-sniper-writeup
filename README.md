@@ -30,8 +30,8 @@ graph TD
     end
 
     subgraph "the solution"
-        NAS["home nas"] -->|api poll (60s)| API["OCI API"]
-        API -- "success (200 OK)" --> Instance["arm instance"]
+        NAS["home nas"] -->|api poll 60s| API["OCI API"]
+        API -- "success 200 OK" --> Instance["arm instance"]
         NAS -- "ssh jump" --> Instance
     end
     
