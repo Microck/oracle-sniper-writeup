@@ -45,7 +45,7 @@ graph TD
 ### phase 0: reconnaissance & the graveyard of failed accounts
 before the success, there was a lot of failure. oracle's security team isn't stupid. they know people want free compute. i spent time mapping their defenses.
 
-my first attempt was lazy. i fired up nordvpn and a privacy.com virtual card.
+my first attempt was lazy. i tried using a standard vpn and a virtual card.
 **result:** `Error processing transaction`.
 **analysis:** oracle subscribes to ip reputation feeds. datacenter ips are flagged instantly. virtual bin numbers are blacklisted.
 
