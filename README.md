@@ -57,6 +57,9 @@ i realized i needed to decouple my physical location from my digital one. i test
 
 decodo was the winner. 40m+ ips. i could target specific cities. mimicking a user in madrid while actually being in paris required low-latency residential relays.
 
+![proxy proof](images/proxy_proof.jpg)
+*convincing the internet i am in madrid*
+
 **the golden rule discovered:** consistency is key.
 spanish card + us ip = **ban**.
 spanish card + spanish ip (proxy) + spanish phone = **success**.
@@ -73,7 +76,7 @@ i couldn't use my computer. i couldn't use my browser. i had to become a ghost.
 
 i used **Dolphin{anty}**. this isn't just a browser; it's a fingerprint spoofer. it generates a fake "noise" over my canvas and WebGL readouts, making my high-end pc look like a generic office laptop.
 
-![dolphin anty fingerprint config](images/dolphin_config.png)
+![dolphin anty fingerprint config](images/dolphin_config.jpg)
 *generating a new digital soul in dolphin*
 
 vpns are dead. oracle knows every datacenter ip range. i bought 1gb of residential proxy data. these ips belong to real comcast/at&t home modems. to oracle, i was just a guy in madrid.
@@ -158,7 +161,7 @@ by combining anti-detect browsers to pass the door check, residential proxies to
 
 i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still running, waiting for the next slot to open.
 
-![oracle console victory](images/console_victory.png)
+![oracle console victory](images/console_victory.jpg)
 *victory. 8 ocpus, 48gb ram, $0.00.*
 
 ***
