@@ -164,5 +164,8 @@ i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still r
 **the proxy provider:**
 i used decodo (formerly smartproxy). their "sticky session" feature is mandatory for the signup flow.
 
+![decodo receipt](images/decodo_dashboard.png)
+*total cost: $4.84 ($4.00 + $0.84 (21% VAT). cheaper than a starbucks latte.*
+
 **the browser:**
 dolphin{anty}. free for 10 profiles. it handles the webgl noise injection better than manual plugin hacking.
