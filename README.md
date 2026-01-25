@@ -43,7 +43,7 @@ graph TD
 ```
 
 ### phase 0: reconnaissance & the graveyard of failed accounts
-before the success, there was a lot of failure. oracle's security team isn't stupid. they know people want free compute. i spent 48 hours mapping their defenses.
+before the success, there was a lot of failure. oracle's security team isn't stupid. they know people want free compute. i spent time mapping their defenses.
 
 my first attempt was lazy. i fired up nordvpn and a privacy.com virtual card.
 **result:** `Error processing transaction`.
