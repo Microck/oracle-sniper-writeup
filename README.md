@@ -1,4 +1,4 @@
-# the phantom user: defeating oracle cloud's capacity boss with python and spite
+# how i got 8 ocpus and 48gb ram for $4.84
 
 ### **date:** jan 25, 2026
 ### **topic:** cloud automation, anti-fingerprinting, resource arbitration
