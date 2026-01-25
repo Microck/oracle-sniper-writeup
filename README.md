@@ -154,9 +154,6 @@ i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still r
 ![oracle console login](images/console_victory.jpg)
 *in. account created successfully. the sniper is now active.*
 
-![decodo receipt](images/receipt.png)
-*total cost: $4.84. cheaper than a latte.*
-
 ***
 
 ### appendix: the toolkit
