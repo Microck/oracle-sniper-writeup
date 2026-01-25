@@ -1,4 +1,4 @@
-# how i got 8 ocpus and 48gb ram for $4.84
+# how i got 8 ocpus and 48gb ram for $4.84: exploiting oracle cloud's free tier
 
 ### **date:** jan 25, 2026
 ### **topic:** cloud automation, anti-fingerprinting, resource arbitration
