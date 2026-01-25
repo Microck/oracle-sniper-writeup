@@ -12,14 +12,16 @@ oracle cloud offers free arm servers. getting one is harder than finding a print
 ---
 
 ### the objective
-the goal was simple: get the maxed-out free ARM instance (VM.Standard.A1.Flex).
-the reality was painful. every time i tried to create an instance in a popular region (like Ashburn or Frankfurt), i was met with the dreaded `500 Internal Server Error: Out of host capacity`.
+the goal was simple: get the maxed-out free ARM instance (VM.Standard.A1.Flex). the reality was painful. every time i tried to create an instance in a popular region like ashburn or frankfurt, i was met with the dreaded 500 error.
 
-i realized this wasn't a technical error; it was a resource contention issue. thousands of users (and bots) were fighting for the same freed-up server slots. to win, i needed persistence. i needed speed. and because oracle limits one account per person, i needed a way to double my odds without getting banned.
+![oracle out of host capacity error](images/error_screenshot.png)
+*the boss fight: oracle's polite way of saying "go away"*
+
+i realized this wasn't a technical error; it was a resource contention issue. thousands of users and bots were fighting for the same freed-up server slots. to win, i needed persistence. i needed speed. and because oracle limits one account per person, i needed a way to double my odds without getting banned.
 
 **my logic:**
 1.  **automation**: a script that hammers the API 24/7.
-2.  **evasion**: a way to run a second account (for double the chance) without oracle linking it to my main account.
+2.  **evasion**: a way to run a second account for double the chance without oracle linking it to my main account.
 3.  **isolation**: a secure way to access the instances once created without leaking my ip.
 
 ```mermaid
@@ -43,45 +45,40 @@ graph TD
 ### phase 0: reconnaissance & the graveyard of failed accounts
 before the success, there was a lot of failure. oracle's security team isn't stupid. they know people want free compute. i spent 48 hours mapping their defenses.
 
-#### the "vpn" trap
-my first attempt was lazy. i used a commercial vpn (nord/express) and a virtual card (privacy.com).
+my first attempt was lazy. i fired up nordvpn and a privacy.com virtual card.
 **result:** `Error processing transaction`.
-**analysis:** oracle subscribes to ip reputation feeds. datacenter ips are flagged instantly. virtual bin numbers (bank identification numbers) are blacklisted.
+**analysis:** oracle subscribes to ip reputation feeds. datacenter ips are flagged instantly. virtual bin numbers are blacklisted.
 
-#### the "incognito" fallacy
 attempt two: legitimate residential ip, but standard chrome incognito mode.
 **result:** shadowban. the account was created, but "out of capacity" errors persisted even when capacity was available.
 **analysis:** i checked my browser fingerprint on `pixelscan.net`. my canvas hash and webgl renderer (nvidia rtx 4090) were unique identifiers. oracle linked my new "spanish" identity to my old "french" account because they shared the same gpu signature.
 
-#### the "proxy" pivot
-i realized i needed to decouple my physical location from my digital one.
-i tested three providers:
-1.  **iproyal**: cheap, but slow. noticed higher latency on the signup page, which might trigger behavioral flags.
-2.  **dexodata**: pay-as-you-go. good for budget, but the pool is smaller.
-3.  **decodo (smartproxy)**: the winner. 40m+ ips. i could target specific cities. mimicking a user in madrid while actually being in paris required low-latency residential relays.
+i realized i needed to decouple my physical location from my digital one. i tested three providers: iproyal (cheap but slow), dexodata (good budget option), and decodo.
 
-**the golden rule discovered:**
-consistency is key.
-*   spanish card + us ip = **ban**.
-*   spanish card + spanish ip (proxy) + spanish phone = **success**.
+decodo was the winner. 40m+ ips. i could target specific cities. mimicking a user in madrid while actually being in paris required low-latency residential relays.
 
-oracle's fraud model (OAAM) calculates a "risk score". if `geo_ip_distance(user_ip, billing_address) > 500km`, the score spikes. if `browser_timezone != ip_timezone`, score spikes. my final setup aligned every single vector to zero out that score.
+**the golden rule discovered:** consistency is key.
+spanish card + us ip = **ban**.
+spanish card + spanish ip (proxy) + spanish phone = **success**.
+
+oracle's fraud model (OAAM) calculates a "risk score". if the geo-distance between your ip and billing address is > 500km, the score spikes. if your browser timezone doesn't match your ip timezone, score spikes. my final setup aligned every single vector to zero out that score.
 
 ### phase 1: the identity firewall
-before i could even think about the script, i had to solve the "identity" problem. oracle uses **Oracle Adaptive Access Manager (OAAM)**, a military-grade fraud detection system. it tracks everything:
-*   **browser fingerprint**: canvas hash, WebGL vendor, AudioContext.
-*   **network**: ip reputation (VPNs = instant ban), ISP type.
-*   **behavior**: typing speed, copy-paste events.
-*   **payment**: bin numbers, billing address consistency.
+before i could even think about the script, i had to solve the identity problem. oracle uses **Oracle Adaptive Access Manager (OAAM)**, a military-grade fraud detection system. it tracks browser fingerprints, network reputation, typing behavior, and payment consistency.
 
 if i just opened a new incognito tab and signed up for a second account, OAAM would see my canvas hash, match my ip to my existing account, and shadowban me instantly.
 
-**the clean room protocol:**
+**the clean room protocol**
 i couldn't use my computer. i couldn't use my browser. i had to become a ghost.
 
-1.  **anti-detect browser**: i used **Dolphin{anty}**. this isn't just a browser; it's a fingerprint spoofer. it generates a fake "noise" over my canvas and WebGL readouts, making my high-end pc look like a generic office laptop.
-2.  **residential proxy**: VPNs are dead. oracle knows every datacenter ip range. i bought 1gb of **residential proxy** data (Decodo/Smartproxy). these ips belong to real Comcast/AT&T home modems. to oracle, i was just a guy in madrid.
-3.  **sticky sessions**: i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from madrid to barcelona in the middle of the credit card form, the fraud score would spike.
+i used **Dolphin{anty}**. this isn't just a browser; it's a fingerprint spoofer. it generates a fake "noise" over my canvas and WebGL readouts, making my high-end pc look like a generic office laptop.
+
+![dolphin anty fingerprint config](images/dolphin_config.png)
+*generating a new digital soul in dolphin*
+
+vpns are dead. oracle knows every datacenter ip range. i bought 1gb of residential proxy data. these ips belong to real comcast/at&t home modems. to oracle, i was just a guy in madrid.
+
+i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from madrid to barcelona in the middle of the credit card form, the fraud score would spike.
 
 ```mermaid
 graph LR
@@ -118,26 +115,19 @@ with the account secured, i needed the weapon. manual creation was futile. i nee
 i adapted a python script (`main.py`) to run on my local nas.
 
 **the loop of persistence:**
-1.  **authentication**: uses an API Key (generated in the console) to sign requests. this bypasses the UI and its CAPTCHAs entirely.
-2.  **targeting**: configured for `VM.Standard.A1.Flex` with 4 OCPUs and 24GB RAM.
-3.  **polling**: every 60 seconds, it sends a `launch_instance` request.
-4.  **error handling**: if it gets `500 Internal Server Error` (the code for "out of capacity"), it sleeps and loops. if it gets `200 OK`, it sends me a discord notification.
+authentication uses an api key to sign requests, bypassing the ui and its captchas entirely. it targets `VM.Standard.A1.Flex` with 4 ocpus and 24gb ram. every 60 seconds, it sends a `launch_instance` request.
 
-**the nas deployment:**
-i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure:
-```bash
-~/oracle-sniper/
-├── account_paris/       # sniper for account A
-└── account_ashburn/     # sniper for account B
-```
-each folder runs independently inside a `nohup` process, effectively creating a distributed botnet of one.
+if it gets `500 Internal Server Error`, it sleeps. if it gets `200 OK`, it sends me a discord notification.
+
+![sniper logs success](images/sniper_logs.png)
+*gotcha. the moment the sniper fired.*
+
+i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure, running each account independently inside a `nohup` process. effectively creating a distributed botnet of one.
 
 ### phase 3: the stealth link (ssh jump host)
-this was the final piece of the puzzle. i had two accounts:
-1.  **paris (account A)**: created years ago, accessed from my home ip.
-2.  **ashburn (account B)**: created via proxy, "located" in madrid.
+this was the final piece of the puzzle. i had two accounts: paris (created years ago, accessed from home) and ashburn (created via proxy, "located" in madrid).
 
-if i ssh'd into account B directly from my home ip, oracle's security logs would see the same ip accessing both accounts. **linkage confirmed. ban hammer dropping.**
+if i ssh'd into account B directly from my home ip, oracle's security logs would see the same ip accessing both accounts. linkage confirmed. ban hammer dropping.
 
 **the solution: ssh tunneling**
 i used my legitimate paris instance as a "jump host" to access the new ashburn instance.
@@ -157,19 +147,19 @@ Host oracle-ashburn
     ProxyJump oracle-paris
 ```
 
-when i type `ssh oracle-ashburn`:
-1.  my nas connects to paris (legit).
-2.  paris opens a tunnel to ashburn.
-3.  ashburn sees an incoming connection from **paris ip**, not my home ip.
+when i type `ssh oracle-ashburn`, my nas connects to paris. paris opens a tunnel to ashburn. ashburn sees an incoming connection from **paris ip**, not my home ip.
 
 this keeps the identities completely isolated. account B never sees my real fingerprint.
 
 ### conclusion
 cloud providers are building higher walls to stop free-tier abuse. they use behavioral biometrics, residential ip filters, and canvas fingerprinting. but resource contention is the great equalizer.
 
-by combining **anti-detect browsers** (to pass the door check), **residential proxies** (to fake the id), and **api automation** (to wait in line for you), you can defeat the "out of capacity" boss.
+by combining anti-detect browsers to pass the door check, residential proxies to fake the id, and api automation to wait in line for you, you can defeat the "out of capacity" boss.
 
 i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still running, waiting for the next slot to open.
+
+![oracle console victory](images/console_victory.png)
+*victory. 8 ocpus, 48gb ram, $0.00.*
 
 ***
 
@@ -179,7 +169,7 @@ i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still r
 [main.py](main.py) - *don't abuse this.*
 
 **the proxy provider:**
-i used **Decodo (formerly Smartproxy)**. their "sticky session" feature is mandatory for the signup flow.
+i used decodo (formerly smartproxy). their "sticky session" feature is mandatory for the signup flow.
 
 **the browser:**
-**Dolphin{anty}**. free for 10 profiles. it handles the WebGL noise injection better than manual plugin hacking.
+dolphin{anty}. free for 10 profiles. it handles the webgl noise injection better than manual plugin hacking.

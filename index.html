@@ -17,6 +17,8 @@
         p, li { text-transform: lowercase; } /* Enforce lowercase style */
         /* Except for specific acronyms we want to keep */
         .keep-case { text-transform: none; }
+        img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 5px; }
+        .caption { font-style: italic; color: #666; text-align: center; display: block; margin-top: 5px; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -34,14 +36,17 @@
     <hr>
 
     <h3>the objective</h3>
-    <p>the goal was simple: get the maxed-out free ARM instance (<span class="keep-case">VM.Standard.A1.Flex</span>). the reality was painful. every time i tried to create an instance in a popular region (like Ashburn or Frankfurt), i was met with the dreaded <code>500 Internal Server Error: Out of host capacity</code>.</p>
+    <p>the goal was simple: get the maxed-out free ARM instance (<span class="keep-case">VM.Standard.A1.Flex</span>). the reality was painful. every time i tried to create an instance in a popular region like ashburn or frankfurt, i was met with the dreaded 500 error.</p>
     
-    <p>i realized this wasn't a technical error; it was a resource contention issue. thousands of users (and bots) were fighting for the same freed-up server slots. to win, i needed persistence. i needed speed. and because oracle limits one account per person, i needed a way to double my odds without getting banned.</p>
+    <img src="images/error_screenshot.png" alt="oracle out of host capacity error">
+    <span class="caption">the boss fight: oracle's polite way of saying "go away"</span>
+
+    <p>i realized this wasn't a technical error; it was a resource contention issue. thousands of users and bots were fighting for the same freed-up server slots. to win, i needed persistence. i needed speed. and because oracle limits one account per person, i needed a way to double my odds without getting banned.</p>
 
     <p><strong>my logic:</strong></p>
     <ol>
         <li><strong>automation</strong>: a script that hammers the API 24/7.</li>
-        <li><strong>evasion</strong>: a way to run a second account (for double the chance) without oracle linking it to my main account.</li>
+        <li><strong>evasion</strong>: a way to run a second account for double the chance without oracle linking it to my main account.</li>
         <li><strong>isolation</strong>: a secure way to access the instances once created without leaking my ip.</li>
     </ol>
 
@@ -53,8 +58,8 @@
         end
 
         subgraph "the solution"
-            NAS["home nas"] -->|api poll (60s)| API["OCI API"]
-            API -- "success (200 OK)" --> Instance["arm instance"]
+            NAS["home nas"] -->|api poll 60s| API["OCI API"]
+            API -- "success 200 OK" --> Instance["arm instance"]
             NAS -- "ssh jump" --> Instance
         end
         
@@ -66,52 +71,42 @@
     <h3>phase 0: reconnaissance & the graveyard of failed accounts</h3>
     <p>before the success, there was a lot of failure. oracle's security team isn't stupid. they know people want free compute. i spent 48 hours mapping their defenses.</p>
 
-    <h4>the "vpn" trap</h4>
-    <p>my first attempt was lazy. i used a commercial vpn (nord/express) and a virtual card (privacy.com).<br>
+    <p>my first attempt was lazy. i fired up nordvpn and a privacy.com virtual card.<br>
     <strong>result:</strong> <code>Error processing transaction</code>.<br>
-    <strong>analysis:</strong> oracle subscribes to ip reputation feeds. datacenter ips are flagged instantly. virtual bin numbers (bank identification numbers) are blacklisted.</p>
+    <strong>analysis:</strong> oracle subscribes to ip reputation feeds. datacenter ips are flagged instantly. virtual bin numbers are blacklisted.</p>
 
-    <h4>the "incognito" fallacy</h4>
     <p>attempt two: legitimate residential ip, but standard chrome incognito mode.<br>
     <strong>result:</strong> shadowban. the account was created, but "out of capacity" errors persisted even when capacity was available.<br>
     <strong>analysis:</strong> i checked my browser fingerprint on <code>pixelscan.net</code>. my canvas hash and webgl renderer (nvidia rtx 4090) were unique identifiers. oracle linked my new "spanish" identity to my old "french" account because they shared the same gpu signature.</p>
 
-    <h4>the "proxy" pivot</h4>
-    <p>i realized i needed to decouple my physical location from my digital one. i tested three providers:</p>
-    <ol>
-        <li><strong>iproyal</strong>: cheap, but slow. noticed higher latency on the signup page, which might trigger behavioral flags.</li>
-        <li><strong>dexodata</strong>: pay-as-you-go. good for budget, but the pool is smaller.</li>
-        <li><strong>decodo (smartproxy)</strong>: the winner. 40m+ ips. i could target specific cities. mimicking a user in madrid while actually being in paris required low-latency residential relays.</li>
-    </ol>
+    <p>i realized i needed to decouple my physical location from my digital one. i tested three providers: iproyal (cheap but slow), dexodata (good budget option), and decodo.</p>
 
-    <p><strong>the golden rule discovered:</strong><br>
-    consistency is key.</p>
+    <p>decodo was the winner. 40m+ ips. i could target specific cities. mimicking a user in madrid while actually being in paris required low-latency residential relays.</p>
+
+    <p><strong>the golden rule discovered:</strong> consistency is key.</p>
     <ul>
         <li>spanish card + us ip = <strong>ban</strong>.</li>
         <li>spanish card + spanish ip (proxy) + spanish phone = <strong>success</strong>.</li>
     </ul>
 
-    <p>oracle's fraud model (OAAM) calculates a "risk score". if <code>geo_ip_distance(user_ip, billing_address) > 500km</code>, the score spikes. if <code>browser_timezone != ip_timezone</code>, score spikes. my final setup aligned every single vector to zero out that score.</p>
+    <p>oracle's fraud model (OAAM) calculates a "risk score". if the geo-distance between your ip and billing address is > 500km, the score spikes. if your browser timezone doesn't match your ip timezone, score spikes. my final setup aligned every single vector to zero out that score.</p>
 
     <h3>phase 1: the identity firewall</h3>
-    <p>before i could even think about the script, i had to solve the "identity" problem. oracle uses <strong>Oracle Adaptive Access Manager (OAAM)</strong>, a military-grade fraud detection system. it tracks everything:</p>
-    <ul>
-        <li><strong>browser fingerprint</strong>: canvas hash, WebGL vendor, AudioContext.</li>
-        <li><strong>network</strong>: ip reputation (VPNs = instant ban), ISP type.</li>
-        <li><strong>behavior</strong>: typing speed, copy-paste events.</li>
-        <li><strong>payment</strong>: bin numbers, billing address consistency.</li>
-    </ul>
+    <p>before i could even think about the script, i had to solve the identity problem. oracle uses <strong>Oracle Adaptive Access Manager (OAAM)</strong>, a military-grade fraud detection system. it tracks browser fingerprints, network reputation, typing behavior, and payment consistency.</p>
 
     <p>if i just opened a new incognito tab and signed up for a second account, OAAM would see my canvas hash, match my ip to my existing account, and shadowban me instantly.</p>
 
-    <p><strong>the clean room protocol:</strong><br>
+    <p><strong>the clean room protocol</strong><br>
     i couldn't use my computer. i couldn't use my browser. i had to become a ghost.</p>
 
-    <ol>
-        <li><strong>anti-detect browser</strong>: i used <strong>Dolphin{anty}</strong>. this isn't just a browser; it's a fingerprint spoofer. it generates a fake "noise" over my canvas and WebGL readouts, making my high-end pc look like a generic office laptop.</li>
-        <li><strong>residential proxy</strong>: VPNs are dead. oracle knows every datacenter ip range. i bought 1gb of <strong>residential proxy</strong> data (Decodo/Smartproxy). these ips belong to real Comcast/AT&T home modems. to oracle, i was just a guy in madrid.</li>
-        <li><strong>sticky sessions</strong>: i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from madrid to barcelona in the middle of the credit card form, the fraud score would spike.</li>
-    </ol>
+    <p>i used <strong>Dolphin{anty}</strong>. this isn't just a browser; it's a fingerprint spoofer. it generates a fake "noise" over my canvas and WebGL readouts, making my high-end pc look like a generic office laptop.</p>
+
+    <img src="images/dolphin_config.png" alt="dolphin anty fingerprint config">
+    <span class="caption">generating a new digital soul in dolphin</span>
+
+    <p>vpns are dead. oracle knows every datacenter ip range. i bought 1gb of residential proxy data. these ips belong to real comcast/at&t home modems. to oracle, i was just a guy in madrid.</p>
+
+    <p>i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from madrid to barcelona in the middle of the credit card form, the fraud score would spike.</p>
 
     <div class="mermaid">
     graph LR
@@ -148,28 +143,19 @@
     <p>i adapted a python script (<code>main.py</code>) to run on my local nas.</p>
 
     <p><strong>the loop of persistence:</strong></p>
-    <ol>
-        <li><strong>authentication</strong>: uses an API Key (generated in the console) to sign requests. this bypasses the UI and its CAPTCHAs entirely.</li>
-        <li><strong>targeting</strong>: configured for <code>VM.Standard.A1.Flex</code> with 4 OCPUs and 24GB RAM.</li>
-        <li><strong>polling</strong>: every 60 seconds, it sends a <code>launch_instance</code> request.</li>
-        <li><strong>error handling</strong>: if it gets <code>500 Internal Server Error</code> (the code for "out of capacity"), it sleeps and loops. if it gets <code>200 OK</code>, it sends me a discord notification.</li>
-    </ol>
+    <p>authentication uses an api key to sign requests, bypassing the ui and its captchas entirely. it targets <span class="keep-case">VM.Standard.A1.Flex</span> with 4 ocpus and 24gb ram. every 60 seconds, it sends a <code>launch_instance</code> request.</p>
 
-    <p><strong>the nas deployment:</strong><br>
-    i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure:</p>
-    <pre>~/oracle-sniper/
-├── account_paris/       # sniper for account A
-└── account_ashburn/     # sniper for account B</pre>
-    <p>each folder runs independently inside a <code>nohup</code> process, effectively creating a distributed botnet of one.</p>
+    <p>if it gets <code>500 Internal Server Error</code>, it sleeps. if it gets <code>200 OK</code>, it sends me a discord notification.</p>
+
+    <img src="images/sniper_logs.png" alt="sniper logs success">
+    <span class="caption">gotcha. the moment the sniper fired.</span>
+
+    <p>i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure, running each account independently inside a <code>nohup</code> process. effectively creating a distributed botnet of one.</p>
 
     <h3>phase 3: the stealth link (ssh jump host)</h3>
-    <p>this was the final piece of the puzzle. i had two accounts:</p>
-    <ol>
-        <li><strong>paris (account A)</strong>: created years ago, accessed from my home ip.</li>
-        <li><strong>ashburn (account B)</strong>: created via proxy, "located" in madrid.</li>
-    </ol>
+    <p>this was the final piece of the puzzle. i had two accounts: paris (created years ago, accessed from home) and ashburn (created via proxy, "located" in madrid).</p>
 
-    <p>if i ssh'd into account B directly from my home ip, oracle's security logs would see the same ip accessing both accounts. <strong>linkage confirmed. ban hammer dropping.</strong></p>
+    <p>if i ssh'd into account B directly from my home ip, oracle's security logs would see the same ip accessing both accounts. linkage confirmed. ban hammer dropping.</p>
 
     <p><strong>the solution: ssh tunneling</strong><br>
     i used my legitimate paris instance as a "jump host" to access the new ashburn instance.</p>
@@ -187,21 +173,19 @@ Host oracle-ashburn
     User ubuntu
     ProxyJump oracle-paris</pre>
 
-    <p>when i type <code>ssh oracle-ashburn</code>:</p>
-    <ol>
-        <li>my nas connects to paris (legit).</li>
-        <li>paris opens a tunnel to ashburn.</li>
-        <li>ashburn sees an incoming connection from <strong>paris ip</strong>, not my home ip.</li>
-    </ol>
+    <p>when i type <code>ssh oracle-ashburn</code>, my nas connects to paris. paris opens a tunnel to ashburn. ashburn sees an incoming connection from <strong>paris ip</strong>, not my home ip.</p>
 
     <p>this keeps the identities completely isolated. account B never sees my real fingerprint.</p>
 
     <h3>conclusion</h3>
     <p>cloud providers are building higher walls to stop free-tier abuse. they use behavioral biometrics, residential ip filters, and canvas fingerprinting. but resource contention is the great equalizer.</p>
     
-    <p>by combining <strong>anti-detect browsers</strong> (to pass the door check), <strong>residential proxies</strong> (to fake the id), and <strong>api automation</strong> (to wait in line for you), you can defeat the "out of capacity" boss.</p>
+    <p>by combining anti-detect browsers to pass the door check, residential proxies to fake the id, and api automation to wait in line for you, you can defeat the "out of capacity" boss.</p>
     
     <p>i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still running, waiting for the next slot to open.</p>
+
+    <img src="images/console_victory.png" alt="oracle console victory">
+    <span class="caption">victory. 8 ocpus, 48gb ram, $0.00.</span>
 
     <hr>
 
@@ -210,10 +194,10 @@ Host oracle-ashburn
     <a href="main.py">main.py</a> - <em>don't abuse this.</em></p>
 
     <p><strong>the proxy provider:</strong><br>
-    i used <strong>Decodo (formerly Smartproxy)</strong>. their "sticky session" feature is mandatory for the signup flow.</p>
+    i used decodo (formerly smartproxy). their "sticky session" feature is mandatory for the signup flow.</p>
 
     <p><strong>the browser:</strong><br>
-    <strong>Dolphin{anty}</strong>. free for 10 profiles. it handles the WebGL noise injection better than manual plugin hacking.</p>
+    dolphin{anty}. free for 10 profiles. it handles the webgl noise injection better than manual plugin hacking.</p>
 
     <script>mermaid.initialize({startOnLoad:true});</script>
 </body>
