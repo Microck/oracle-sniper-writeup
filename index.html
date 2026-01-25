@@ -81,10 +81,10 @@
 
     <p>i realized i needed to decouple my physical location from my digital one. i tested three providers: iproyal (cheap but slow), dexodata (good budget option), and decodo.</p>
 
-    <p>decodo was the winner. 40m+ ips. i could target specific cities. mimicking a user in madrid while actually being in paris required low-latency residential relays.</p>
+    <p>decodo was the winner. 40m+ ips. i could target specific cities. mimicking a user in catalonia while actually being in paris required low-latency residential relays.</p>
 
     <img src="images/proxy_proof.jpg" alt="proxy proof">
-    <span class="caption">convincing the internet i am in madrid</span>
+    <span class="caption">convincing the internet i am in catalonia</span>
 
     <p><strong>the golden rule discovered:</strong> consistency is key.</p>
     <ul>
@@ -107,9 +107,9 @@
     <img src="images/dolphin_config.jpg" alt="dolphin anty fingerprint config">
     <span class="caption">generating a new digital soul in dolphin</span>
 
-    <p>vpns are dead. oracle knows every datacenter ip range. i bought 1gb of residential proxy data. these ips belong to real comcast/at&t home modems. to oracle, i was just a guy in madrid.</p>
+    <p>vpns are dead. oracle knows every datacenter ip range. i bought 1gb of residential proxy data. these ips belong to real comcast/at&t home modems. to oracle, i was just a guy in catalonia.</p>
 
-    <p>i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from madrid to barcelona in the middle of the credit card form, the fraud score would spike.</p>
+    <p>i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from barcelona to madrid in the middle of the credit card form, the fraud score would spike.</p>
 
     <div class="mermaid">
     graph LR
@@ -120,7 +120,7 @@
 
         subgraph "network layer"
             ISP["home isp ip"]
-            Proxy["residential proxy (madrid)"]
+            Proxy["residential proxy (catalonia)"]
         end
 
         subgraph "oracle OAAM"
@@ -156,7 +156,7 @@
     <p>i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure, running each account independently inside a <code>nohup</code> process. effectively creating a distributed botnet of one.</p>
 
     <h3>phase 3: the stealth link (ssh jump host)</h3>
-    <p>this was the final piece of the puzzle. i had two accounts: paris (created years ago, accessed from home) and ashburn (created via proxy, "located" in madrid).</p>
+    <p>this was the final piece of the puzzle. i had two accounts: paris (created years ago, accessed from home) and ashburn (created via proxy, "located" in catalonia).</p>
 
     <p>if i ssh'd into account B directly from my home ip, oracle's security logs would see the same ip accessing both accounts. linkage confirmed. ban hammer dropping.</p>
 
