@@ -68,31 +68,23 @@
         style Console fill:#ff9999,stroke:#333,stroke-width:2px,color:black
     </div>
 
-    <h3>phase 0: reconnaissance & the graveyard of failed accounts</h3>
-    <p>before the success, there was a lot of failure. oracle's security team isn't stupid. they know people want free compute. i spent time mapping their defenses.</p>
+    <h3>phase 0: reconnaissance & strategy</h3>
+    <p>before diving in, i researched oracle's defenses. their security team isn't stupid. they know people want free compute.</p>
 
-    <p>my first attempt was lazy. i tried using a standard vpn and a virtual card.<br>
-    <strong>result:</strong> <code>Error processing transaction</code>.<br>
-    <strong>analysis:</strong> oracle subscribes to ip reputation feeds. datacenter ips are flagged instantly. virtual bin numbers are blacklisted.</p>
+    <p>my research into community reports (reddit, forums) confirmed three major ban triggers:</p>
+    <ol>
+        <li><strong>ip reputation</strong>: datacenter ips (vpns) are flagged instantly.</li>
+        <li><strong>browser fingerprinting</strong>: unique canvas hashes or webgl renderers in incognito mode create a trackable signature.</li>
+        <li><strong>payment inconsistency</strong>: virtual bin numbers and geo-mismatches (card country != ip country) are blacklisted.</li>
+    </ol>
 
-    <p>attempt two: legitimate residential ip, but standard chrome incognito mode.<br>
-    <strong>result:</strong> shadowban. the account was created, but "out of capacity" errors persisted even when capacity was available.<br>
-    <strong>analysis:</strong> i checked my browser fingerprint on <code>pixelscan.net</code>. my canvas hash and webgl renderer (nvidia rtx 4090) were unique identifiers. oracle linked my new "spanish" identity to my old "french" account because they shared the same gpu signature.</p>
-
-    <p>i realized i needed to decouple my physical location from my digital one. i tested three providers: iproyal (cheap but slow), dexodata (good budget option), and decodo.</p>
-
-    <p>decodo was the winner. 40m+ ips. i could target specific cities. mimicking a user in catalonia while actually being in paris required low-latency residential relays.</p>
-
-    <img src="images/proxy_proof.jpg" alt="proxy proof">
-    <span class="caption">convincing the internet i am in catalonia</span>
-
-    <p><strong>the golden rule discovered:</strong> consistency is key.</p>
+    <p><strong>the golden rule:</strong> consistency is key.</p>
     <ul>
         <li>spanish card + us ip = <strong>ban</strong>.</li>
         <li>spanish card + spanish ip (proxy) + spanish phone = <strong>success</strong>.</li>
     </ul>
 
-    <p>oracle's fraud model (OAAM) calculates a "risk score". if the geo-distance between your ip and billing address is > 500km, the score spikes. if your browser timezone doesn't match your ip timezone, score spikes. my final setup aligned every single vector to zero out that score.</p>
+    <p>oracle's fraud model (OAAM) calculates a "risk score". if the geo-distance between your ip and billing address is > 500km, the score spikes. my final setup aligned every single vector to zero out that score.</p>
 
     <h3>phase 1: the identity firewall</h3>
     <p>before i could even think about the script, i had to solve the identity problem. oracle uses <strong>Oracle Adaptive Access Manager (OAAM)</strong>, a military-grade fraud detection system. it tracks browser fingerprints, network reputation, typing behavior, and payment consistency.</p>
