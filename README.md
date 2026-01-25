@@ -161,8 +161,11 @@ by combining anti-detect browsers to pass the door check, residential proxies to
 
 i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still running, waiting for the next slot to open.
 
-![oracle console victory](images/console_victory.jpg)
-*victory. 8 ocpus, 48gb ram, $0.00.*
+![oracle console login](images/console_victory.jpg)
+*in. account created successfully. the sniper is now active.*
+
+![decodo receipt](images/receipt.png)
+*total cost: $4.84. cheaper than a latte.*
 
 ***
 
