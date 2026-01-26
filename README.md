@@ -112,7 +112,9 @@ authentication uses an api key to sign requests, bypassing the ui and its captch
 
 if it gets `500 Internal Server Error`, it sleeps. if it gets `200 OK`, it sends me a discord notification.
 
-![sniper logs success](images/sniper_logs.png)
+<img width="1080" height="auto" alt="image" src="https://github.com/user-attachments/assets/104a9cb8-2e80-4ac5-b488-793b6503a7ac" />
+
+![sniper logs success](images/sniper_logs.jpg)
 *gotcha. the moment the sniper fired.*
 
 i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure, running each account independently inside a `nohup` process. effectively creating a distributed botnet of one.
