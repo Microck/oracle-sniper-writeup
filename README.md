@@ -1,173 +1,310 @@
-# how i got 8 ocpus and 48gb ram for $4.84: exploiting oracle cloud's free tier
+# oracle cloud free tier resource exhaustion bypass via autonomous api polling
 
-### **date:** jan 25, 2026
+### **date:** jan 29, 2026
 ### **topic:** cloud automation, anti-fingerprinting, resource arbitration
-### **page:** microck.github.io/oracle-sniper
+### **classification:** technical procedure / vulnerability disclosure
 
 ---
 
-### tl;dr
-oracle cloud offers free arm servers. getting one is harder than finding a printer that works. the "out of host capacity" error is a lie designed to make you quit. i didn't want to click "create" manually for six months. so, i built a multi-region, 24/7 autonomous sniper that lives on my nas, routes traffic through a stealth identity layer to bypass oracle's aggressive fraud detection (OAAM), and manages multiple accounts without them ever linking back to my home ip.
+### subject
+
+oracle cloud's "out of host capacity" error (http 500) for free-tier arm instances (`vm.standard.a1.flex`) functions as a soft limit based on temporal resource contention rather than a hard account restriction. by implementing high-frequency, authenticated api polling coupled with identity-layer obfuscation (residential proxies and canvas fingerprint spoofing), users can exploit race conditions in the provisioning queue to secure maximum-spec instances (4 ocpus, 24gb ram) that are otherwise unavailable via the web console.
 
 ---
 
-### the objective
-the goal was simple: get the maxed-out free ARM instance (VM.Standard.A1.Flex). the reality was painful. every time i tried to create an instance in a popular region like ashburn or frankfurt, i was met with the dreaded 500 error.
+### the "capacity" lie
+
+when a user attempts to create an arm instance in a popular region (ashburn, frankfurt, tokyo), the console almost invariably returns `500 internal server error: out of host capacity`.
+
+this is **not** a hard denial. it is a temporal state.
+
+- **reality**: capacity opens up constantly as other tenancies are terminated or hardware is added.
+- **the flaw**: the allocation logic is first-come-first-served (fcfs).
+- **the exploit**: a human cannot click fast enough to catch the 3-second window when a slot opens. an automated script polling every 60 seconds *can*.
 
 ![oracle out of host capacity error](images/error_screenshot.png)
-*the boss fight: oracle's polite way of saying "go away"*
-
-i realized this wasn't a technical error; it was a resource contention issue. thousands of users and bots were fighting for the same freed-up server slots. to win, i needed persistence. i needed speed. and because oracle limits one account per person, i needed a way to double my odds without getting banned.
-
-**my logic:**
-1.  **automation**: a script that hammers the API 24/7.
-2.  **evasion**: a way to run a second account for double the chance without oracle linking it to my main account.
-3.  **isolation**: a secure way to access the instances once created without leaking my ip.
 
 ```mermaid
-graph TD
+graph td
     subgraph "the problem"
-        User[me] -->|manual click| Console["oracle console"]
-        Console -- "error: out of capacity" --x User
+        user[me] -->|manual click| console["oracle console"]
+        console -- "error: out of capacity" --x user
     end
 
     subgraph "the solution"
-        NAS["home nas"] -->|api poll 60s| API["OCI API"]
-        API -- "success 200 OK" --> Instance["arm instance"]
-        NAS -- "ssh jump" --> Instance
+        nas["home nas"] -->|api poll 60s| api["oci api"]
+        api -- "success 200 ok" --> instance["arm instance"]
+        nas -- "ssh jump" --> instance
     end
-    
+
     %% high contrast styling
-    style Instance fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
-    style Console fill:#ff9999,stroke:#333,stroke-width:2px,color:black
+    style instance fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
+    style console fill:#ff9999,stroke:#333,stroke-width:2px,color:black
 ```
 
-### phase 0: reconnaissance & strategy
-before diving in, i researched oracle's defenses. their security team isn't stupid. they know people want free compute.
+---
 
-my research into community reports (reddit, forums) confirmed three major ban triggers:
-1.  **ip reputation**: datacenter ips (vpns) are flagged instantly.
-2.  **browser fingerprinting**: unique canvas hashes or webgl renderers in incognito mode create a trackable signature.
-3.  **payment inconsistency**: virtual bin numbers and geo-mismatches (card country != ip country) are blacklisted.
+### details
 
-**the golden rule:** consistency is key.
-*   spanish card + us ip = **ban**.
-*   spanish card + spanish ip (proxy) + spanish phone = **success**.
+the exploitation technique relies on three distinct phases: **identity engineering** (to create the account), **autonomous sniping** (to provision resources), and **stealth access** (to maintain the account).
 
-oracle's fraud model (OAAM) calculates a "risk score". if the geo-distance between your ip and billing address is > 500km, the score spikes. my final setup aligned every single vector to zero out that score.
+---
 
-### phase 1: the identity firewall
-before i could even think about the script, i had to solve the identity problem. oracle uses **Oracle Adaptive Access Manager (OAAM)**, a military-grade fraud detection system. it tracks browser fingerprints, network reputation, typing behavior, and payment consistency.
+### phase 1: identity engineering (the "clean room")
 
-if i just opened a new incognito tab and signed up for a second account, OAAM would see my canvas hash, match my ip to my existing account, and shadowban me instantly.
+before any automation can run, you must possess a valid oci account. this is the hardest step due to **oracle adaptive access manager (oaam)**.
 
-**the clean room protocol**
-i couldn't use my computer. i couldn't use my browser. i had to become a ghost.
+#### the threat model
 
-i used **Dolphin{anty}**. this isn't just a browser; it's a fingerprint spoofer. it generates a fake "noise" over my canvas and WebGL readouts, making my high-end pc look like a generic office laptop.
+oaam aggregates data to generate a "fraud risk score":
 
-![dolphin anty fingerprint config](images/dolphin_config.jpg)
-*generating a new digital soul in dolphin*
-
-vpns are dead. oracle knows every datacenter ip range. i bought 1gb of residential proxy data. these ips belong to real comcast/at&t home modems. to oracle, i was just a guy in catalonia.
-
-i configured the proxy to hold the same ip for 30 minutes ("sticky session"). if my ip rotated from barcelona to madrid in the middle of the credit card form, the fraud score would spike.
+- **browser fingerprint**: canvas hash, audiocontext, webgl renderer, fonts.
+- **network reputation**: ip quality score, datacenter vs. residential, geo-velocity.
+- **payment consistency**: bin country vs. ip country.
 
 ```mermaid
-graph LR
+graph lr
     subgraph "my pc"
-        Browser["chrome (dirty identity)"]
-        Dolphin["Dolphin{anty} (clean identity)"]
+        browser["chrome (dirty identity)"]
+        dolphin["dolphin{anty} (clean identity)"]
     end
 
     subgraph "network layer"
-        ISP["home isp ip"]
-        Proxy["residential proxy (catalonia)"]
+        isp["home isp ip"]
+        proxy["residential proxy (catalonia)"]
     end
 
-    subgraph "oracle OAAM"
-        Checks["fingerprint + ip analysis"]
-        Decision{risk score}
+    subgraph "oracle oaam"
+        checks["fingerprint + ip analysis"]
+        decision{risk score}
     end
 
-    Browser -- "direct" --> ISP --> Checks
-    Dolphin -- "spoofed hardware" --> Proxy --> Checks
-    
-    Checks --> Decision
-    Decision -- "score > 80" --> Ban["shadowban / error"]
-    Decision -- "score < 20" --> Success["account created"]
-    
+    browser -- "direct" --> isp --> checks
+    dolphin -- "spoofed hardware" --> proxy --> checks
+
+    checks --> decision
+    decision -- "score > 80" --> ban["shadowban / error"]
+    decision -- "score < 20" --> success["account created"]
+
     %% high contrast styling
-    style Ban fill:#ff9999,stroke:#333,stroke-width:2px,color:black
-    style Success fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
+    style ban fill:#ff9999,stroke:#333,stroke-width:2px,color:black
+    style success fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
 ```
 
-### phase 2: the sniper mechanism
-with the account secured, i needed the weapon. manual creation was futile. i needed something that would sleep, retry, and strike the millisecond a slot opened.
+#### the bypass procedure
 
-i adapted a python script (`main.py`) to run on my local nas.
+**tools required:**
 
-**the loop of persistence:**
-authentication uses an api key to sign requests, bypassing the ui and its captchas entirely. it targets `VM.Standard.A1.Flex` with 4 ocpus and 24gb ram. every 60 seconds, it sends a `launch_instance` request.
+1.  **dolphin{anty}**: anti-detect browser that spoofs hardware fingerprints.
+2.  **residential proxy**: rotating or sticky residential ips (not vpns/datacenter).
+3.  **payment method**: physical card (not virtual/prepaid) matching the proxy region.
 
-if it gets `500 Internal Server Error`, it sleeps. if it gets `200 OK`, it sends me a discord notification.
+**steps:**
 
-<img width="1080" height="auto" alt="image" src="https://github.com/user-attachments/assets/104a9cb8-2e80-4ac5-b488-793b6503a7ac" />
+1.  **profile generation**: in dolphin, create a new profile. set os to "windows" or "mac". the software generates unique, consistent noise for canvas/webgl to mimic a generic consumer device.
 
-![sniper logs success](images/sniper_logs.jpg)
-*gotcha. the moment the sniper fired.*
+![dolphin anty fingerprint config](images/dolphin_config.jpg)
 
-i didn't want to leave my pc on. i deployed this to my home server using a simple directory structure, running each account independently inside a `nohup` process. effectively creating a distributed botnet of one.
-
-### phase 3: the stealth link (ssh jump host)
-this was the final piece of the puzzle. i had two accounts: paris (created years ago, accessed from home) and ashburn (created via proxy, "located" in catalonia).
-
-if i ssh'd into account B directly from my home ip, oracle's security logs would see the same ip accessing both accounts. linkage confirmed. ban hammer dropping.
-
-**the solution: ssh tunneling**
-i used my legitimate paris instance as a "jump host" to access the new ashburn instance.
-
-```bash
-# ~/.ssh/config
-
-# the "legit" path
-Host oracle-paris
-    HostName 141.145.xxx.xxx
-    User ubuntu
-
-# the "stealth" path
-Host oracle-ashburn
-    HostName 10.0.0.x  # public ip of ashburn
-    User ubuntu
-    ProxyJump oracle-paris
-```
-
-when i type `ssh oracle-ashburn`, my nas connects to paris. paris opens a tunnel to ashburn. ashburn sees an incoming connection from **paris ip**, not my home ip.
-
-this keeps the identities completely isolated. account B never sees my real fingerprint.
-
-### conclusion
-cloud providers are building higher walls to stop free-tier abuse. they use behavioral biometrics, residential ip filters, and canvas fingerprinting. but resource contention is the great equalizer.
-
-by combining anti-detect browsers to pass the door check, residential proxies to fake the id, and api automation to wait in line for you, you can defeat the "out of capacity" boss.
-
-i now have 8 OCPUs and 48GB of RAM running 24/7 for $0.00. the sniper is still running, waiting for the next slot to open.
-
-![oracle console login](images/console_victory.jpg)
-*in. account created successfully. the sniper is now active.*
-
-***
-
-### appendix: the toolkit
-
-**the sniper script:**
-[main.py](main.py) - *don't abuse this.*
-
-**the proxy provider:**
-i used decodo (formerly smartproxy). their "sticky session" feature is mandatory for the signup flow.
+2.  **network alignment**: purchase a residential proxy (e.g., from *decodo* or similar providers). configure it as a **sticky session** (10-30 mins).
+    - *critical*: if the ip changes from madrid to barcelona during the credit card verification, the geo-velocity check fails -> account ban.
+3.  **execution**: complete the signup flow inside this container. do not use your regular chrome/firefox.
+4.  **verification**: once the "welcome to oracle cloud" email arrives, the identity is established.
 
 ![decodo receipt](images/decodo_dashboard.png)
-*total cost: $4.84 ($4.00 + $0.84 (21% VAT). cheaper than a starbucks latte.*
 
-**the browser:**
-dolphin{anty}. free for 10 profiles. it handles the webgl noise injection better than manual plugin hacking.
+---
+
+### phase 2: the sniper (technical implementation)
+
+this phase moves the battle from the browser to the api. we deploy a persistent python daemon on a local server (nas/raspberry pi) to handle the race condition.
+
+#### 1. environment preparation
+
+the attack runs on a low-power linux host.
+
+**directory structure:**
+```bash
+/home/microck/oracle-sniper/
+├── main.py             # the logic core
+├── setup_init.sh       # process wrapper & monitoring
+├── oci.env             # secrets configuration
+├── oci_config          # oci sdk config
+├── oci_api_key.pem     # your private api key
+└── requirements.txt    # dependencies
+```
+
+#### 2. authentication setup (`oci_config`)
+
+bypass the gui entirely. generate an api signing key in the oracle console (user settings -> api keys).
+
+**file: `oci_config`**
+```ini
+[default]
+user=ocid1.user.oc1..aaaa...
+fingerprint=xx:xx:xx...
+key_file=/home/microck/oracle-sniper/account_ashburn/oci_api_key.pem
+tenancy=ocid1.tenancy.oc1..aaaa...
+region=us-ashburn-1
+```
+
+#### 3. attack configuration (`oci.env`)
+
+this file controls the sniper's targeting parameters.
+
+**file: `oci.env`**
+```bash
+# target definition
+oci_compute_shape=vm.standard.a1.flex
+# ubuntu 22.04 aarch64 image ocid (region specific!)
+oci_image_id=ocid1.image.oc1.iad.aaaaaaaa...
+ocpus=4
+memory_in_gbs=24
+
+# network targets
+# must pre-create a vcn and subnet in the console!
+oci_subnet_id=ocid1.subnet.oc1.iad.aaaaaaaa...
+assign_public_ip=true
+
+# attack frequency
+# < 60s risks "toomanyrequests" (429) rate limiting
+request_wait_time_secs=60
+
+# notification channels
+discord_webhook=https://discord.com/api/webhooks/...
+```
+
+#### 4. the logic core (`main.py`)
+
+the script implements a specific state machine to handle oracle's error codes.
+
+**key logic: error handling**
+oracle returns specific codes when capacity is full. the script must distinguish between "fatal error" (config wrong) and "soft error" (try again).
+
+```python
+def handle_errors(command, data, log):
+    # these are not failures. they are "wait" signals.
+    soft_errors = [
+        "toomanyrequests",
+        "out of host capacity",
+        "internalerror",
+        "bad gateway"
+    ]
+
+    if data["code"] in soft_errors:
+        log.info(f"soft limit hit: {data['code']}. sleeping...")
+        time.sleep(wait_time)
+        return true # retry allowed
+
+    # anything else is a real crash
+    raise exception(f"fatal error: {data}")
+```
+
+**key logic: the launch loop**
+```python
+def launch_instance():
+    # loop until success
+    while not instance_exist_flag:
+        try:
+            compute_client.launch_instance(...)
+            # if we get here, we won.
+            send_discord_message("🎉 sniped!")
+            break
+        except serviceerror as e:
+            # handle the 500/429 errors
+            handle_errors(...)
+```
+
+![sniper logs success](images/sniper_logs.jpg)
+
+#### 5. deployment
+
+we use `nohup` (no hang up) to ensure the process survives ssh disconnection.
+
+**command:**
+```bash
+chmod +x setup_init.sh
+./setup_init.sh
+```
+
+**monitoring logs:**
+```bash
+tail -f launch_instance.log
+```
+
+*output (normal operation):*
+```text
+2026-01-25 22:11:03 - info - command: launch_instance-- output: {'status': 500, 'code': 'internalerror', 'message': 'out of host capacity.'}
+2026-01-25 22:12:04 - info - command: launch_instance-- output: {'status': 500, 'code': 'internalerror', 'message': 'out of host capacity.'}
+```
+
+---
+
+### phase 3: stealth access (post-exploitation)
+
+once the instance creates, accessing it carelessly will get you banned. if your "identity" ip (spain proxy) created the account, but your "access" ip (home ip) logs in via ssh, oracle links the two.
+
+**the "clean" link:**
+do not ssh directly. tunnel traffic through a neutral, trusted intermediary.
+
+**scenario:**
+
+1.  **trusted host**: existing `oracle-paris` instance (or any cheap vps).
+2.  **target host**: the new `oracle-ashburn` instance.
+
+**ssh config (`~/.ssh/config`):**
+```bash
+# 1. the jump host (the mask)
+host oracle-paris
+    hostname 141.145.xxx.xxx
+    user ubuntu
+    identityfile ~/.ssh/id_rsa_paris
+
+# 2. the target (hidden behind paris)
+host oracle-ashburn
+    hostname 10.0.0.x                # use private ip if vpn'd, or public ip
+    user ubuntu
+    proxyjump oracle-paris           # <--- the key
+    identityfile ~/.ssh/id_rsa_ashburn
+```
+
+**traffic flow:**
+`home pc` -> (encrypted) -> `paris vps` -> (encrypted) -> `ashburn instance`
+
+to oracle's logs in ashburn, the connection comes from the paris ip, not your home ip.
+
+---
+
+### evidence of success
+
+retrieving logs from the nas confirms the methodology works.
+
+**file: `instance_created`**
+```text
+instance id: ocid1.instance.oc1.iad.anuwcljt6jdfblacplxseahalwablmit2csfvgj3gx47n5npd23d5zwnuega
+display name: ashburn-sniper-instance
+availability domain: mnay:us-ashburn-ad-1
+shape: vm.standard.a1.flex
+state: provisioning
+```
+
+the script successfully negotiated the race condition, provisioned the resource, and alerted the user via discord.
+
+![oracle console login](images/console_victory.jpg)
+
+---
+
+### recommendations
+
+to mitigate this exhaustion and evasion technique, cloud providers should:
+
+1.  **implement proof-of-work (pow)**: require a computational puzzle (hashcash style) for `launch_instance` api calls on free-tier tenancies. this makes high-frequency polling computationally expensive for the attacker.
+2.  **link billing to access**: correlate login/api ip addresses with billing geography post-creation, not just during signup.
+3.  **waitlist queue**: replace "first-come-first-served" 500 errors with a verified waitlist system for high-demand shapes.
+
+---
+
+### references
+
+- [oracle cloud infrastructure python sdk](https://github.com/oracle/oci-python-sdk)
+- [oaam (oracle adaptive access manager) documentation](https://docs.oracle.com/cd/e23943_01/doc.1111/e15740/oaam.htm)
+- [dolphin{anty} anti-detect browser](https://anty.dolphin.ru.com)

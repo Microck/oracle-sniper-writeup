@@ -1,14 +1,14 @@
-# Session Handoff
+# session handoff
 
-## Goal
-Create `test2.md` in gpg-fail style analyzing the OCI race condition vulnerability.
+## goal
+create `test2.md` in gpg-fail style analyzing the oci race condition vulnerability.
 
-## Progress
-- Analyzed `main.py` and `test1.md`.
-- Created `test2.md` with required technical depth and formatting.
-- Created branch `mic/add-test2-writeup`.
-- Pushed and merged PR #2.
-- Created changeset.
+## progress
+- analyzed `main.py` and `test1.md`.
+- created `test2.md` with required technical depth and formatting.
+- created branch `mic/add-test2-writeup`.
+- pushed and merged pr #2.
+- created changeset.
 
-## Next Steps
-- Start new session.
+## next steps
+- start new session.

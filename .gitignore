@@ -1,0 +1,29 @@
+# oci secrets - contains api keys and credentials
+oci.env
+oci_api_key.pem
+*.pem
+
+# logs
+*.log
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# environments
+venv/
+env/
+.venv/
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
