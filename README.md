@@ -24,23 +24,7 @@ this is **not** a hard denial. it is a temporal state.
 
 ![oracle out of host capacity error](images/error_screenshot.png)
 
-```mermaid
-graph TD
-    subgraph "the problem"
-        user[me] -->|manual click| console["oracle console"]
-        console -- "error: out of capacity" --x user
-    end
-
-    subgraph "the solution"
-        nas["home nas"] -->|api poll 60s| api["oci api"]
-        api -- "success 200 ok" --> instance["arm instance"]
-        nas -- "ssh jump" --> instance
-    end
-
-    %% high contrast styling
-    style instance fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
-    style console fill:#ff9999,stroke:#333,stroke-width:2px,color:black
-```
+![problem vs solution flow diagram](images/diagram_problem_solution.svg)
 
 ---
 
@@ -62,34 +46,7 @@ oaam aggregates data to generate a "fraud risk score":
 - **network reputation**: ip quality score, datacenter vs. residential, geo-velocity.
 - **payment consistency**: bin country vs. ip country.
 
-```mermaid
-graph LR
-    subgraph "my pc"
-        browser["chrome (dirty identity)"]
-        dolphin["dolphin{anty} (clean identity)"]
-    end
-
-    subgraph "network layer"
-        isp["home isp ip"]
-        proxy["residential proxy (catalonia)"]
-    end
-
-    subgraph "oracle oaam"
-        checks["fingerprint + ip analysis"]
-        decision{risk score}
-    end
-
-    browser -- "direct" --> isp --> checks
-    dolphin -- "spoofed hardware" --> proxy --> checks
-
-    checks --> decision
-    decision -- "score > 80" --> ban["shadowban / error"]
-    decision -- "score < 20" --> success["account created"]
-
-    %% high contrast styling
-    style ban fill:#ff9999,stroke:#333,stroke-width:2px,color:black
-    style success fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
-```
+![oaam risk assessment flow diagram](images/diagram_oaam_flow.svg)
 
 #### the bypass procedure
 

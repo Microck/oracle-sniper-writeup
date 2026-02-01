@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" style="background-color:#f5f5f5">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/>
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#51cf66"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="16" font-weight="bold" fill="#333">the problem vs the solution</text>
+  
+  <!-- THE PROBLEM subgraph -->
+  <rect x="50" y="50" width="320" height="140" fill="#ff9999" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="210" y="70" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="bold" fill="#333">the problem</text>
+  
+  <!-- User node -->
+  <rect x="80" y="100" width="80" height="40" fill="white" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="120" y="125" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#333">me</text>
+  
+  <!-- Console node -->
+  <rect x="240" y="100" width="100" height="40" fill="white" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="290" y="125" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#333">oracle console</text>
+  
+  <!-- Arrow: user to console -->
+  <line x1="160" y1="120" x2="235" y2="120" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="197" y="115" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#666">manual click</text>
+  
+  <!-- Arrow: console to user (error) -->
+  <line x1="290" y1="145" x2="120" y2="145" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+  <text x="205" y="160" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#ff6b6b">error: out of capacity</text>
+  
+  <!-- THE SOLUTION subgraph -->
+  <rect x="430" y="50" width="320" height="140" fill="#ccffcc" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="590" y="70" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="bold" fill="#333">the solution</text>
+  
+  <!-- NAS node -->
+  <rect x="460" y="90" width="80" height="40" fill="white" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="500" y="115" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#333">home nas</text>
+  
+  <!-- API node -->
+  <rect x="600" y="90" width="80" height="40" fill="white" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="640" y="115" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#333">oci api</text>
+  
+  <!-- Instance node -->
+  <rect x="600" y="160" width="100" height="40" fill="white" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="650" y="185" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#333">arm instance</text>
+  
+  <!-- Arrow: nas to api -->
+  <line x1="540" y1="110" x2="595" y2="110" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="567" y="105" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#666">api poll 60s</text>
+  
+  <!-- Arrow: api to instance -->
+  <line x1="640" y1="130" x2="640" y2="155" stroke="#51cf66" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+  <text x="670" y="145" text-anchor="start" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#51cf66">success 200 ok</text>
+  
+  <!-- Arrow: nas to instance (ssh) -->
+  <path d="M 500 130 L 500 180 L 595 180" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="545" y="195" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#666">ssh jump</text>
+</svg>

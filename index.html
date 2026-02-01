@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>oracle cloud free tier resource exhaustion bypass</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
         h1, h2, h3 { color: #111; text-transform: lowercase; }
@@ -49,23 +49,8 @@
     <img src="images/error_screenshot.png" alt="oracle out of host capacity error">
     <span class="caption">the boss fight: oracle's polite way of saying "go away"</span>
 
-    <div class="mermaid">
-graph TD
-    subgraph "the problem"
-        user[me] -->|manual click| console["oracle console"]
-        console -- "error: out of capacity" --x user
-    end
-
-    subgraph "the solution"
-        nas["home nas"] -->|api poll 60s| api["oci api"]
-        api -- "success 200 ok" --> instance["arm instance"]
-        nas -- "ssh jump" --> instance
-    end
-
-    %% high contrast styling
-    style instance fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
-    style console fill:#ff9999,stroke:#333,stroke-width:2px,color:black
-    </div>
+    <img src="images/diagram_problem_solution.svg" alt="problem vs solution flow diagram">
+    <span class="caption">the problem: manual clicking fails. the solution: automated api polling succeeds.</span>
 
     <hr>
 
@@ -86,34 +71,8 @@ graph TD
         <li><strong>payment consistency</strong>: bin country vs. ip country.</li>
     </ul>
 
-    <div class="mermaid">
-graph LR
-    subgraph "my pc"
-        browser["chrome (dirty identity)"]
-        dolphin["dolphin{anty} (clean identity)"]
-    end
-
-    subgraph "network layer"
-        isp["home isp ip"]
-        proxy["residential proxy (catalonia)"]
-    end
-
-    subgraph "oracle oaam"
-        checks["fingerprint + ip analysis"]
-        decision{risk score}
-    end
-
-    browser -- "direct" --> isp --> checks
-    dolphin -- "spoofed hardware" --> proxy --> checks
-
-    checks --> decision
-    decision -- "score > 80" --> ban["shadowban / error"]
-    decision -- "score < 20" --> success["account created"]
-
-    %% high contrast styling
-    style ban fill:#ff9999,stroke:#333,stroke-width:2px,color:black
-    style success fill:#ccffcc,stroke:#333,stroke-width:2px,color:black
-    </div>
+    <img src="images/diagram_oaam_flow.svg" alt="oaam risk assessment flow diagram">
+    <span class="caption">oaam evaluates browser fingerprints and ip reputation to calculate fraud risk score.</span>
 
     <h4>the bypass procedure</h4>
     <p><strong>tools required:</strong></p>
@@ -322,6 +281,5 @@ state: provisioning</pre>
         <li><a href="https://anty.dolphin.ru.com">dolphin{anty} anti-detect browser</a></li>
     </ul>
 
-    <script>mermaid.initialize({startOnLoad:true});</script>
 </body>
 </html>
