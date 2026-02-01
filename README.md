@@ -25,7 +25,7 @@ this is **not** a hard denial. it is a temporal state.
 ![oracle out of host capacity error](images/error_screenshot.png)
 
 ```mermaid
-graph td
+graph TD
     subgraph "the problem"
         user[me] -->|manual click| console["oracle console"]
         console -- "error: out of capacity" --x user
@@ -63,7 +63,7 @@ oaam aggregates data to generate a "fraud risk score":
 - **payment consistency**: bin country vs. ip country.
 
 ```mermaid
-graph lr
+graph LR
     subgraph "my pc"
         browser["chrome (dirty identity)"]
         dolphin["dolphin{anty} (clean identity)"]
